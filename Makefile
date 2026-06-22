@@ -28,56 +28,6 @@ watch:
 build:
 	go build -o bin/main cmd/main.go
 
-
-# Routes
-
-get-events:
-	http GET $(BASE_URL)/events
- 
-get-event:
-	http GET $(BASE_URL)/events/$(id)
- 
-create-event:
-	http POST $(BASE_URL)/events \
-		title="$(title)" \
-		content="$(content)" \
-		location="$(location)" \
-		date="$(date)" \
-		time="$(time)" \
-		link="$(link)"
-
-update-event:
-	http PUT $(BASE_URL)/events/$(id) \
-		title=$(title) \
-		content=$(content)
- 
-delete-event:
-	http DELETE $(BASE_URL)/events/$(id)
-
-create-user:
-	http POST $(BASE_URL)/users \
-		name="$(name)" \
-		email="$(email)" \
-		usertype="$(usertype)" \
-		student_id="$(student_id)" \
-		major="$(major)" \
-		school="$(school)" \
-		avatar_url="$(avatar_url)" \
-		oauth_subject="$(oauth_subject)"
-
-get-user:
-	http GET $(BASE_URL)/users/$(id)
-
-get-user-email:
-	http GET $(BASE_URL)/users/email/$(email)
-
-update-user:
-	http PATCH $(BASE_URL)/users/$(id) \
-		major="$(major)" \
-		school="$(school)" \
-		student_id="$(student_id)
-
-
 # migrations
 
 migrate-up:
@@ -94,3 +44,100 @@ tables:
 
 check-schema-migrations:
 	docker exec -it postgres-db psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT * FROM schema_migrations;" \dt
+
+
+# Routes
+
+#==========================================
+# Event
+# =========================================
+
+get-events:
+	http GET $(BASE_URL_DEVELOPMENT)/events
+ 
+get-event:
+	http GET $(BASE_URL_DEVELOPMENT)/events/$(id)
+ 
+create-event:
+	http POST $(BASE_URL_DEVELOPMENT)/events \
+		title="$(title)" \
+		content="$(content)" \
+		location="$(location)" \
+		date="$(date)" \
+		time="$(time)" \
+		link="$(link)"
+
+update-event:
+	http PUT $(BASE_URL_DEVELOPMENT)/events/$(id) \
+		title=$(title) \
+		content=$(content)
+ 
+delete-event:
+	http DELETE $(BASE_URL_DEVELOPMENT)/events/$(id)
+
+
+#==========================================
+# User
+# =========================================
+
+create-user:
+	http POST $(BASE_URL_DEVELOPMENT)/users \
+		name="$(name)" \
+		email="$(email)" \
+		usertype="$(usertype)" \
+		student_id="$(student_id)" \
+		major="$(major)" \
+		school="$(school)" \
+		avatar_url="$(avatar_url)" \
+		oauth_subject="$(oauth_subject)"
+
+get-user:
+	http GET $(BASE_URL_DEVELOPMENT)/users/$(id)
+
+get-user-email:
+	http GET $(BASE_URL_DEVELOPMENT)/users/email/$(email)
+
+update-user:
+	http PATCH $(BASE_URL_DEVELOPMENT)/users/$(id) \
+		major="$(major)" \
+		school="$(school)" \
+		student_id="$(student_id)"
+
+# ==========================================
+# Steps
+# ==========================================
+
+sync-steps:
+	http POST $(BASE_URL_DEVELOPMENT)/steps/sync \
+		user_id:=16 \
+		step_count:=8432 \
+		recorded_date="2026-06-22"
+
+sync-steps-bulk:
+	http POST $(BASE_URL_DEVELOPMENT)/steps/sync/bulk \
+		Content-Type:application/json \
+		:='[{"user_id":16,"step_count":8432,"recorded_date":"2026-06-22"},{"user_id":16,"step_count":12043,"recorded_date":"2026-06-21"},{"user_id":16,"step_count":6721,"recorded_date":"2026-06-20"}]'
+
+get-steps:
+	http GET $(BASE_URL_DEVELOPMENT)/steps/$(userID)
+
+get-steps-range:
+	http GET "$(BASE_URL_DEVELOPMENT)/steps/$(userID)/range?from=$(from)&to=$(to)"
+
+#==========================================
+# Leaderboard
+# ==========================================
+
+get-leaderboard:
+	http GET $(BASE_URL_DEVELOPMENT)/leaderboard
+
+get-user-rank:
+	http GET $(BASE_URL_DEVELOPMENT)/leaderboard/$(userID)
+
+update-leaderboard:
+	http POST $(BASE_URL_DEVELOPMENT)/leaderboard/update \
+		user_id:=$(userID) \
+		step_count:=$(step_count)
+
+reset-leaderboard:
+	http POST $(BASE_URL_DEVELOPMENT)/leaderboard/reset

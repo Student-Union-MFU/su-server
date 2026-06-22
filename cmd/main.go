@@ -55,6 +55,10 @@ func main() {
 	stepService := service.NewStepsService(stepRepository)
 	stepHandler := handler.NewStepsHandler(stepService)
 
+	leaderboardRepository := repository.NewLeaderboardRepository(db)
+	leaderboardService := service.NewLeaderboardService(leaderboardRepository)
+	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardService)
+
     r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"message": "SU Backend running"}`))
@@ -86,6 +90,12 @@ func main() {
 			r.Get("/{userID}/range?from=2026-06-01&to=2026-08-01", stepHandler.GetStepsByDateRange)
 			r.Post("/sync", stepHandler.SyncSteps)
 			r.Post("/sync/bulk", stepHandler.SyncManySteps)
+		})
+		r.Route("/leaderboard", func(r chi.Router) {
+			r.Get("/", leaderboardHandler.GetLeaderboard)
+			r.Get("/{userID}", leaderboardHandler.GetUserRank)
+			r.Post("/update", leaderboardHandler.UpdateEntry)
+			r.Post("/reset", leaderboardHandler.Reset)
 		})
 	})
 
