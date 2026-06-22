@@ -3,6 +3,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"su-server/internal/model"
@@ -30,6 +31,7 @@ func (h* EventHandler) GetAllEvents (w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Failed to get Event Objects: " + err.Error(), http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
 		return
 	}
 
@@ -41,12 +43,14 @@ func (h* EventHandler) GetOneEvents (w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Failed to get Event Object", http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
 		return
 	}
 	
 	event, err := h.service.GetOneEvent(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Failed to get Event Object", http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
 		return
 	}
 
@@ -58,12 +62,14 @@ func (h *EventHandler) CreateOneEvent(w http.ResponseWriter, r *http.Request) {
     var event model.Event
     if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
         http.Error(w, "invalid body", http.StatusBadRequest)
+		slog.Error("Error Information", " = ", err)
         return
     }
 
     completed, err := h.service.CreateOneEvent(r.Context(), event)
     if err != nil {
 		http.Error(w, "Failed to create event: " + err.Error(), http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
         return
     }
 
@@ -74,16 +80,46 @@ func (h *EventHandler) CreateOneEvent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+
+func (h *EventHandler) UpdateOneEvent(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+	if err != nil {
+        http.Error(w, "invalid body", http.StatusBadRequest)
+		slog.Error("Error Information", " = ", err)
+        return
+	}
+
+	var event model.Event
+    if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+        http.Error(w, "invalid body", http.StatusBadRequest)
+		slog.Error("Error Information", " = ", err)
+        return
+    }
+
+    completed, err := h.service.UpdateOneEvent(r.Context(), id, event)
+    if err != nil {
+		http.Error(w, "Failed to update the event: " + err.Error(), http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(completed)
+}
+
 func (h* EventHandler) DeleteOneEvents (w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Failed to get Event Object", http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
 		return
 	}
 	
 	event, err := h.service.DeleteEvent(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Failed to get Event Object", http.StatusInternalServerError)
+		slog.Error("Error Information", " = ", err)
 		return
 	}
 

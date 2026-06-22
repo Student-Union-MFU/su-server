@@ -63,25 +63,40 @@ func (r *EventRepository) GetAllEvents(ctx context.Context) ([]model.Event, erro
 }
 
 func (r *EventRepository) GetOneEvent(id int, ctx context.Context) (*model.Event, error){
-	var event model.Event
-	err := r.db.QueryRow(ctx, "SELECT * FROM events WHERE id = $1", id).Scan(
-&		event.ID,
-		&event.Title,
-		&event.Content,
-		&event.Date,
-		&event.CreatedAt,
-		&event.Images,
-		&event.Link,
-		&event.Location,
-		&event.Time,
+    var event model.Event
+    err := r.db.QueryRow(ctx,
+        "SELECT id, title, content, location, date, time, link, created_at FROM events WHERE id = $1", id,
+    ).Scan(
+        &event.ID,
+        &event.Title,
+        &event.Content,
+        &event.Location,
+        &event.Date,
+        &event.Time,
+        &event.Link,
+        &event.CreatedAt,
+    )
+    if err != nil {
+        return nil, err
+    }
 
-	)
-	
-	if err != nil {
-		return  &event, err
-	}
+    imgRows, err := r.db.Query(ctx,
+        "SELECT id, event_id, url, position FROM event_images WHERE event_id = $1 ORDER BY position", id,
+    )
+    if err != nil {
+        return nil, err
+    }
+    defer imgRows.Close()
 
-	return &event, nil
+    for imgRows.Next() {
+        var img model.EventImage
+        if err := imgRows.Scan(&img.ID, &img.EventID, &img.URL, &img.Position); err != nil {
+            return nil, err
+        }
+        event.Images = append(event.Images, img)
+    }
+
+    return &event, nil
 }
 
 func (r *EventRepository) GetAllEvent(ctx context.Context) ([]model.Event, error){
@@ -154,12 +169,56 @@ func (r *EventRepository) InsertMultipleEvents(ctx context.Context, events []mod
 	return true, nil
 }
 
-func (r *EventRepository) UpdateOneEvent(ctx context.Context, event model.Event) error {
-    _, err := r.db.Exec(ctx,
-        "UPDATE events SET title=$1, content=$2 WHERE id=$3",
-        event.Title, event.Content, event.ID,
-    )
-    return err
+func (r *EventRepository) UpdateOneEvent(ctx context.Context, id int, event model.Event) (*model.Event, error) {
+	var result model.Event
+	err := r.db.QueryRow(ctx,
+		`UPDATE events
+		 SET title    = $1,
+		     content  = $2,
+		     location = $3,
+		     date     = $4,
+		     time     = $5,
+		     link     = $6
+		 WHERE id = $7
+		 RETURNING id, title, content, location, date, time, link, created_at`,
+		event.Title,
+		event.Content,
+		event.Location,
+		event.Date,
+		event.Time,
+		event.Link,
+		id,
+	).Scan(
+		&result.ID,
+		&result.Title,
+		&result.Content,
+		&result.Location,
+		&result.Date,
+		&result.Time,
+		&result.Link,
+		&result.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	imgRows, err := r.db.Query(ctx,
+		"SELECT id, event_id, url, position FROM event_images WHERE event_id = $1 ORDER BY position", id,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer imgRows.Close()
+
+	for imgRows.Next() {
+		var img model.EventImage
+		if err := imgRows.Scan(&img.ID, &img.EventID, &img.URL, &img.Position); err != nil {
+			return nil, err
+		}
+		result.Images = append(result.Images, img)
+	}
+
+	return &result, nil
 }
 
 func (r *EventRepository) DeletetOneEvent(id int, ctx context.Context) (bool, error) {

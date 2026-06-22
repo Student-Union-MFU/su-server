@@ -15,11 +15,6 @@ func NewEventService(repo *repository.EventRepository) *EventService {
 	return &EventService{ repo: repo }
 }
 
-// InsertOneEventService is a Constructor 
-func InsertOneEventService(repo *repository.EventRepository) *EventService {
-    return &EventService{repo: repo}
-}
-
 // GetOneEvent and GetAllEvents is for GET Requests
 func (s *EventService) GetOneEvent(ctx context.Context, id int) (*model.Event, error) {
     return s.repo.GetOneEvent(id, ctx)
@@ -39,8 +34,8 @@ func (s *EventService) CreateMultipleEvent(ctx context.Context, event []model.Ev
 }
 
 // UpdateOneEvent is for PATCH Request
-func (s *EventService) UpdateOneEvent(ctx context.Context, event model.Event) (error) {
-	return s.repo.UpdateOneEvent(ctx, event)
+func (s *EventService) UpdateOneEvent(ctx context.Context, id int, event model.Event) (*model.Event, error) {
+	return s.repo.UpdateOneEvent(ctx, id, event)
 }
 
 // DeleteEvent is for DELETE Request
